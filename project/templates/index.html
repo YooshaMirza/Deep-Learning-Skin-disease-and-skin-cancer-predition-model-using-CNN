@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Classification</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-beta3/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            /* Darker gradient background colors */
+            background: linear-gradient(to right, #00acc1, #ec407a);
+            font-family: 'Roboto', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #ffffff; /* White main container */
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .container:hover {
+            transform: scale(1.03);
+            box-shadow: 0px 12px 36px rgba(0, 0, 0, 0.3);
+        }
+
+        .upload-section {
+            padding: 30px;
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.6);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .upload-section:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-color: #0056b3;
+        }
+
+        .upload-section input {
+            display: none;
+        }
+
+        .upload-section label {
+            font-size: 1.2rem;
+            color: #007bff;
+            cursor: pointer;
+        }
+
+        .result-box {
+            margin-top: 30px;
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.9); /* Light translucent white for the result image box */
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-box img {
+            max-width: 100%;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 3px solid #007bff;
+        }
+
+        .prediction-result {
+            padding: 20px;
+            background: rgba(0, 123, 255, 0.2); /* Translucent blue for prediction results */
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+        }
+
+        .prediction-result h3 {
+            font-size: 1.8rem;
+            color: #343a40;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: -webkit-linear-gradient(90deg, #007bff, #2575fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .prediction-item {
+            font-size: 1.1rem;
+            color: #495057;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+
+        .prediction-item strong {
+            color: #007bff;
+            font-weight: 600;
+        }
+
+        .btn-custom {
+            padding: 12px 35px;
+            font-size: 1.1rem;
+            background-image: linear-gradient(to right, #007bff, #0056b3);
+            color: #fff;
+            border-radius: 30px;
+            border: none;
+            transition: background-image 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            background-image: linear-gradient(to right, #0056b3, #00408d);
+        }
+
+        .btn-upload-again {
+            padding: 10px 25px;
+            font-size: 1rem;
+            background-color: #28a745;
+            color: #fff;
+            border-radius: 30px;
+            border: none;
+            margin-top: 20px;
+        }
+
+        .btn-upload-again:hover {
+            background-color: #218838;
+        }
+
+        footer {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="mb-4">AI Image Classification</h1>
+
+        <form id="uploadForm" method="POST" action="/predict" enctype="multipart/form-data">
+            <div class="upload-section">
+                <label for="file">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16">
+                        <path d="M.5 9.9a.5.5 0 0 0 .5.5h4.5v4a.5.5 0 0 0 1 0v-4h4.5a.5.5 0 0 0 .5-.5v-.637a.5.5 0 0 0-.146-.354L8.707 4.793a1 1 0 0 0-1.414 0L.646 8.909A.5.5 0 0 0 .5 9.263v.637zM14 10v3H2v-3H1v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3h-1z"/>
+                    </svg>
+                    <p class="mt-2">Choose an Image to Upload</p>
+                </label>
+                <input type="file" id="file" name="file">
+            </div>
+            <button type="submit" class="btn btn-custom mt-4">Upload and Classify</button>
+        </form>
+
+        {% if img_data %}
+            <div class="result-box">
+                <img src="data:image/jpeg;base64,{{ img_data }}" class="img-thumbnail">
+                <div class="prediction-result">
+                    <h3>Prediction Results</h3>
+                    {% for model_name, result in results.items() %}
+                        <p class="prediction-item"><strong>{{ model_name }}</strong> - Predicted Class: {{ result.predicted_class }}</p>
+                        <p class="prediction-item"><strong>{{ model_name }}</strong> - Confidence: {{ result.confidence }}%</p>
+                    {% endfor %}
+                </div>
+            </div>
+            <!-- Add button to upload another image -->
+            <button id="uploadAgain" class="btn-upload-again" onclick="resetForm()">Upload Another Image</button>
+        {% endif %}
+    </div>
+
+    <script>
+        // Reset the form to allow uploading another image
+        function resetForm() {
+            document.getElementById("uploadForm").reset();
+            // Optionally hide the results and upload again button if you want the user to start fresh
+            document.querySelector(".result-box").style.display = 'none';
+            document.getElementById("uploadAgain").style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
